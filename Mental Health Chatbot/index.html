@@ -1,46 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kiafya - Mental Wellness Chat</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuliabot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-green-50 via-blue-50 to-purple-100 min-h-screen flex items-center justify-center px-4">
 
-    <!-- SEO Meta -->
-    <meta name="description" content="A mental wellness chatbot supporting youth and communities in English and Swahili." />
-    <meta name="author" content="Your Team Name" />
+  <div class="w-full max-w-sm bg-white rounded-3xl shadow-lg p-6 text-center space-y-6">
+    
+    <!-- 🌿 Branding -->
+    <div>
+      <img src="C:\xampp\htdocs\ICS Project\ICSProject_166529_169390\Images\logo_tuliabot.png" alt="Tuliabot Logo" class="mx-auto w-20 h-20 rounded-full shadow-md mb-2" />
+      <h1 class="text-2xl font-bold text-blue-600">Tuliabot</h1>
+      <p class="text-sm text-gray-600">Your safe space. Kila wakati. Kila mahali</p>
+    </div>
 
-    <!-- Social Sharing (Open Graph) -->
-    <meta property="og:title" content="Kiafya - Mental Wellness Chat" />
-    <meta property="og:description" content="A mental wellness chatbot supporting youth and communities in English and Swahili." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/assets/og-image.png" />
-    <meta property="og:url" content="http://localhost:3000" />
+    <!-- 💬 Welcome Message -->
+    <div>
+      <p class="text-lg text-gray-700">Hi there 👋, unafeel aje leo?</p>
+    </div>
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Kiafya - Mental Wellness Chat" />
-    <meta name="twitter:description" content="A mental wellness chatbot supporting youth and communities in English and Swahili." />
-    <meta name="twitter:image" content="/assets/og-image.png" />
+    <!-- 🔘 Main Action Button -->
+    <div class="space-y-3">
+      <button class="w-full bg-blue-500 text-white py-3 rounded-xl text-lg font-semibold hover:bg-blue-600 transition">
+        Start Chat
+      </button>
+      <div class="flex justify-center gap-4">
+        <button class="text-blue-500 font-medium underline">Log In</button>
+        <button class="text-blue-500 font-medium underline">Sign Up</button>
+      </div>
+    </div>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- 🌍 Language Toggle -->
+    <div class="text-sm text-gray-500 mt-4">
+      <span class="font-semibold">🌍 Language:</span>
+      <button class="text-blue-600 font-medium">🇰🇪 Swahili</button> |
+      <button class="text-blue-600 font-medium">🇬🇧 English</button>
+    </div>
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+    <!-- 🧘 Optional: Daily Features -->
+    <div class="mt-6 space-y-1 text-sm text-left text-gray-600">
+      <p>💡 <strong>Today’s Tip:</strong> Breathe deeply for 60 seconds.</p>
+      <p>💖 <strong>Affirmation:</strong> "I am enough just as I am."</p>
+    </div>
 
-    <!-- Mobile Optimization -->
-    <meta name="theme-color" content="#6366f1" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Kiafya" />
-  </head>
+    <!-- 🚨 Emergency Help Icon -->
+    <div class="absolute top-4 right-4">
+      <button title="Emergency Help">
+        🚨
+      </button>
+    </div>
 
-  <body style="margin: 0; font-family: 'Inter', sans-serif; background-color: #f9f9f9;">
-    <div id="root"></div>
+  </div>
 
-    <!-- Main App Entry (For React/Vite/Parcel/etc.) -->
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+</body>
 </html>
