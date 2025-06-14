@@ -10,9 +10,8 @@
     body {
       font-family: 'Nunito', sans-serif;
     }
-
     .chat-container {
-      max-height: calc(100vh - 144px); /* subtract header + footer height */
+      max-height: calc(100vh - 144px);
       overflow-y: auto;
     }
   </style>
@@ -30,7 +29,7 @@
   </header>
 
   <!-- Chat Area -->
-  <main id="chat" class="chat-container px-4 py-2 flex flex-col gap-3">
+  <main class="chat-container px-4 py-2 flex flex-col gap-3" id="chat-area">
     <div class="bg-white text-gray-800 p-3 rounded-xl shadow w-fit max-w-[75%]">
       Hi there! 👋<br> How are you feeling today?
     </div>
@@ -50,11 +49,8 @@
     </button>
   </footer>
 
-  <!-- Script -->
   <script>
-    const chatContainer = document.getElementById('chat');
-    const sendBtn = document.getElementById('send-btn');
-    const userInput = document.getElementById('user-input');
+    const chatContainer = document.getElementById('chat-area');
 
     function addMessage(content, isBot = false) {
       const bubble = document.createElement('div');
@@ -67,33 +63,29 @@
     }
 
     async function sendMessage() {
-      const msg = userInput.value.trim();
+      const msgInput = document.getElementById("user-input");
+      const msg = msgInput.value.trim();
       if (!msg) return;
 
-      addMessage(msg, false);
-      userInput.value = '';
+      addMessage(msg, false); // User message
+      msgInput.value = "";
 
       try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: msg })
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg }),
         });
-
         const data = await res.json();
-        addMessage(data.reply || 'Sorry, no response received.', true);
-      } catch (err) {
-        console.error(err);
-        addMessage('Oops! Something went wrong.', true);
+        addMessage(data.reply || "Sorry, I didn't get that.", true); // Bot reply
+      } catch (error) {
+        addMessage("⚠️ Failed to connect. Please try again later.", true);
       }
     }
 
-    sendBtn.addEventListener('click', sendMessage);
-
-    userInput.addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') {
-        sendMessage();
-      }
+    document.getElementById("send-btn").addEventListener("click", sendMessage);
+    document.getElementById("user-input").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
     });
   </script>
 </body>
