@@ -1,26 +1,26 @@
-const express = require("express");
-const path = require("path");
-
+const express = require('express');
+const path = require('path');
 const app = express();
-const port = 3000;
+const PORT = 3000;
 
-// Serve static files from "public" directory
-app.use(express.static(path.join(__dirname, "public")));
+// Serve static files (HTML, CSS, JS) from the "public" folder
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Optional: Set a default route (redirect to index.html or login.html)
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// Optional: Route explicitly to index.html for "/"
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// API endpoint
-app.use(express.json());
-
-app.post("/api/chat", (req, res) => {
-  const userMessage = req.body.message;
-  // You can replace this with your AI logic later
-  res.json({ reply: `Tuliabot received: ${userMessage}` });
+// Optional: Route to chat.html when user visits /chat
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
 
-app.listen(port, () => {
-  console.log(`✅ Server running at http://localhost:${port}`);
+// Optional: Catch-all for undefined routes
+app.use((req, res) => {
+  res.status(404).send('404 - Page Not Found');
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });

@@ -30,15 +30,9 @@
   </header>
 
   <!-- Chat Area -->
-  <main class="chat-container px-4 py-2 flex flex-col gap-3">
+  <main id="chat" class="chat-container px-4 py-2 flex flex-col gap-3">
     <div class="bg-white text-gray-800 p-3 rounded-xl shadow w-fit max-w-[75%]">
       Hi there! 👋<br> How are you feeling today?
-    </div>
-    <div class="self-end bg-blue-600 text-white p-3 rounded-xl shadow max-w-[75%]">
-      I’m feeling a bit anxious 😟
-    </div>
-    <div class="bg-white text-gray-800 p-3 rounded-xl shadow w-fit max-w-[75%]">
-      I'm really sorry to hear that. Would you like a grounding exercise or some breathing help?
     </div>
   </main>
 
@@ -56,6 +50,51 @@
     </button>
   </footer>
 
-  <script src="chat.js"></script>
+  <!-- Script -->
+  <script>
+    const chatContainer = document.getElementById('chat');
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+
+    function addMessage(content, isBot = false) {
+      const bubble = document.createElement('div');
+      bubble.className = `${isBot
+        ? 'bg-white text-gray-800'
+        : 'self-end bg-blue-600 text-white'} p-3 rounded-xl shadow max-w-[75%] w-fit`;
+      bubble.innerText = content;
+      chatContainer.appendChild(bubble);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const msg = userInput.value.trim();
+      if (!msg) return;
+
+      addMessage(msg, false);
+      userInput.value = '';
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg })
+        });
+
+        const data = await res.json();
+        addMessage(data.reply || 'Sorry, no response received.', true);
+      } catch (err) {
+        console.error(err);
+        addMessage('Oops! Something went wrong.', true);
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    userInput.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
 </body>
 </html>
