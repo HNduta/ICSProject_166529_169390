@@ -3,24 +3,29 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-// Serve static files (HTML, CSS, JS) from the "public" folder
-app.use(express.static(path.join(__dirname, 'public')));
+// Middleware
+app.use(express.json()); // for parsing JSON
+app.use(express.static(path.join(__dirname, 'public'))); // serve static files
 
-// Optional: Route explicitly to index.html for "/"
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// POST route to handle chat messages
+app.post('/api/chat', (req, res) => {
+  const userMessage = req.body.message;
+
+  // Basic chatbot logic (can be replaced with OpenAI, Rasa, etc.)
+  let reply = "I'm here to listen. Can you tell me more?";
+
+  if (userMessage.toLowerCase().includes("anxious")) {
+    reply = "I'm sorry you're feeling anxious. Would you like a breathing exercise?";
+  } else if (userMessage.toLowerCase().includes("happy")) {
+    reply = "That's great to hear! 😊 What made your day better?";
+  } else if (userMessage.toLowerCase().includes("help")) {
+    reply = "If you're in distress, please reach out to Befrienders Kenya at 0722 178 177.";
+  }
+
+  res.json({ reply });
 });
 
-// Optional: Route to chat.html when user visits /chat
-app.get('/chat', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
-});
-
-// Optional: Catch-all for undefined routes
-app.use((req, res) => {
-  res.status(404).send('404 - Page Not Found');
-});
-
+// Start the server
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
