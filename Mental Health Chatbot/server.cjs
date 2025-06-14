@@ -1,19 +1,26 @@
 const express = require("express");
-const cors = require("cors");
-const app = express();
+const path = require("path");
 
-app.use(cors());
+const app = express();
+const port = 3000;
+
+// Serve static files from "public" directory
+app.use(express.static(path.join(__dirname, "public")));
+
+// Optional: Set a default route (redirect to index.html or login.html)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// API endpoint
 app.use(express.json());
 
 app.post("/api/chat", (req, res) => {
   const userMessage = req.body.message;
-  console.log("User message:", userMessage);
-
-  res.json({
-    reply: `You said: "${userMessage}". I'm here for you 💙`,
-  });
+  // You can replace this with your AI logic later
+  res.json({ reply: `Tuliabot received: ${userMessage}` });
 });
 
-app.listen(3000, () => {
-  console.log("✅ Server running at http://localhost:3000");
+app.listen(port, () => {
+  console.log(`✅ Server running at http://localhost:${port}`);
 });
