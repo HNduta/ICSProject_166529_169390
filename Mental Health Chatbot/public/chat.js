@@ -1,7 +1,13 @@
-document.getElementById("send-btn").addEventListener("click", sendMessage);
+const sendBtn = document.getElementById("send-btn");
+const input = document.getElementById("user-input");
+const chat = document.querySelector("main");
+
+sendBtn.addEventListener("click", sendMessage);
+input.addEventListener("keypress", e => {
+  if (e.key === "Enter") sendMessage();
+});
 
 async function sendMessage() {
-  const input = document.getElementById("user-input");
   const message = input.value.trim();
   if (!message) return;
 
@@ -26,7 +32,6 @@ async function sendMessage() {
 }
 
 function displayUserMessage(msg) {
-  const chat = document.querySelector("main");
   const bubble = document.createElement("div");
   bubble.className = "self-end bg-blue-600 text-white p-3 rounded-xl shadow max-w-[75%]";
   bubble.textContent = msg;
@@ -35,7 +40,6 @@ function displayUserMessage(msg) {
 }
 
 function displayBotMessage(msg) {
-  const chat = document.querySelector("main");
   const bubble = document.createElement("div");
   bubble.className = "bg-white text-gray-800 p-3 rounded-xl shadow w-fit max-w-[75%]";
   bubble.textContent = msg;
@@ -44,9 +48,9 @@ function displayBotMessage(msg) {
 }
 
 function updateLastBotMessage(newText) {
-  const chat = document.querySelector("main");
   const last = chat.querySelector("div:last-child");
   if (last && last.className.includes("text-gray-800")) {
     last.textContent = newText;
   }
 }
+
