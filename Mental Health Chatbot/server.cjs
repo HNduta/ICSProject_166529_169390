@@ -1,31 +1,32 @@
+// server.cjs
 const express = require('express');
 const path = require('path');
+const axios = require('axios');
+
 const app = express();
 const PORT = 3000;
 
-// Middleware
-app.use(express.json()); // for parsing JSON
-app.use(express.static(path.join(__dirname, 'public'))); // serve static files
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// POST route to handle chat messages
-app.post('/api/chat', (req, res) => {
+app.post('/api/chat', async (req, res) => {
   const userMessage = req.body.message;
 
-  // Basic chatbot logic (can be replaced with OpenAI, Rasa, etc.)
-  let reply = "I'm here to listen. Can you tell me more?";
+  try {
+    const response = await axios.post('http://localhost:11434/api/generate', {
+      model: 'llama3',
+      prompt: userMessage,
+      stream: false
+    });
 
-  if (userMessage.toLowerCase().includes("anxious")) {
-    reply = "I'm sorry you're feeling anxious. Would you like a breathing exercise?";
-  } else if (userMessage.toLowerCase().includes("happy")) {
-    reply = "That's great to hear! 😊 What made your day better?";
-  } else if (userMessage.toLowerCase().includes("help")) {
-    reply = "If you're in distress, please reach out to Befrienders Kenya at 0722 178 177.";
+    res.json({ reply: response.data.response.trim() });
+  } catch (error) {
+    console.error('Ollama Error:', error.message);
+    res.status(500).json({ reply: "⚠️ Sorry, something went wrong talking to the model." });
   }
-
-  res.json({ reply });
 });
 
-// Start the server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
+
