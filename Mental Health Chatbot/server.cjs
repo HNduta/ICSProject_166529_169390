@@ -13,7 +13,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/chatbotDB', {
 });
 
 // Load Conversation model
-const Conversation = require('Mental Health Chatbot\models\conversation.js');
+const Conversation = require('./models/conversation.cjs');
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
