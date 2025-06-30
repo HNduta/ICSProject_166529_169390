@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat History - TuliaBot</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    .message:hover .actions {
+      display: flex;
+    }
+  </style>
+</head>
+<body class="bg-blue-50 min-h-screen font-sans">
+  <header class="bg-white shadow p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold text-blue-700">🕒 Chat History</h1>
+    <a href="chat.html" class="text-sm text-blue-600 underline">← Back to Chat</a>
+  </header>
+
+  <main class="p-4 space-y-4 overflow-y-auto" id="history-box">
+    <!-- History messages loaded here -->
+  </main>
+
+  <script>
+    const userId = "default-user";
+
+    window.onload = async () => {
+      const res = await fetch(`/api/chat/history/${userId}`);
+      const messages = await res.json();
+
+      const container = document.getElementById("history-box");
+
+      messages.forEach(msg => {
+        const wrapper = document.createElement("div");
+        wrapper.className = `message group flex justify-${msg.sender === 'user' ? 'end' : 'start'} relative`;
+
+        const bubble = document.createElement("div");
+        bubble.className = `${msg.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800'} p-3 rounded-lg shadow w-fit max-w-[80%]`;
+        const time = new Date(msg.timestamp).toLocaleString();
+        bubble.innerHTML = `<div>${msg.text}</div><div class='text-xs mt-1 ${msg.sender === 'user' ? 'text-blue-200' : 'text-gray-400'}'>🕒 ${time}</div>`;
+
+        const actions = document.createElement("div");
+        actions.className = "actions absolute -top-2 right-0 hidden text-xs gap-2 group-hover:flex";
+
+        const editBtn = document.createElement("button");
+        editBtn.innerHTML = "<span class='bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500 transition'>Edit</span>";
+        editBtn.onclick = async () => {
+          const newText = prompt("Edit this message:", msg.text);
+          if (!newText || !newText.trim()) return;
+          const result = await fetch(`/api/chat/message/${msg._id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newText: newText.trim() })
+          });
+          if (result.ok) {
+            bubble.innerHTML = `<div>${newText.trim()}</div><div class='text-xs mt-1 ${msg.sender === 'user' ? 'text-blue-200' : 'text-gray-400'}'>🕒 ${time}</div>`;
+          }
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerHTML = "<span class='bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition'>Delete</span>";
+        deleteBtn.onclick = async () => {
+          if (!confirm("Delete this message?")) return;
+          const result = await fetch(`/api/chat/message/${msg._id}`, { method: 'DELETE' });
+          if (result.ok) wrapper.remove();
+        };
+
+        actions.appendChild(editBtn);
+        actions.appendChild(deleteBtn);
+
+        wrapper.appendChild(bubble);
+        wrapper.appendChild(actions);
+        container.appendChild(wrapper);
+      });
+    };
+  </script>
+</body>
+</html>
