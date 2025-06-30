@@ -1,31 +1,95 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const path = require('path');
+const axios = require('axios');
+
 const app = express();
 const PORT = 3000;
 
-// Middleware
-app.use(express.json()); // for parsing JSON
-app.use(express.static(path.join(__dirname, 'public'))); // serve static files
-
-// POST route to handle chat messages
-app.post('/api/chat', (req, res) => {
-  const userMessage = req.body.message;
-
-  // Basic chatbot logic (can be replaced with OpenAI, Rasa, etc.)
-  let reply = "I'm here to listen. Can you tell me more?";
-
-  if (userMessage.toLowerCase().includes("anxious")) {
-    reply = "I'm sorry you're feeling anxious. Would you like a breathing exercise?";
-  } else if (userMessage.toLowerCase().includes("happy")) {
-    reply = "That's great to hear! 😊 What made your day better?";
-  } else if (userMessage.toLowerCase().includes("help")) {
-    reply = "If you're in distress, please reach out to Befrienders Kenya at 0722 178 177.";
-  }
-
-  res.json({ reply });
+// Connect to MongoDB
+mongoose.connect('mongodb://127.0.0.1:27017/chatbotDB', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 });
 
-// Start the server
+// Load Conversation model
+const Conversation = require('./models/conversation.cjs');
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Handle chat messages and save them
+app.post('/api/chat', async (req, res) => {
+  const { message, userId = "default-user" } = req.body;
+
+  try {
+    const response = await axios.post('http://localhost:11434/api/generate', {
+      model: 'llama3',
+      prompt: message,
+      stream: false,
+    });
+
+    const botReply = response.data.response.trim();
+
+    // Save both user and bot messages in DB
+    let convo = await Conversation.findOne({ userId });
+    if (!convo) convo = new Conversation({ userId, messages: [] });
+
+    convo.messages.push({ sender: 'user', text: message });
+    convo.messages.push({ sender: 'bot', text: botReply });
+    await convo.save();
+
+    res.json({ reply: botReply });
+  } catch (error) {
+    console.error('Ollama Error:', error.message);
+    res.status(500).json({ reply: "⚠️ Sorry, something went wrong talking to the model." });
+  }
+});
+
+// Fetch full chat history
+app.get('/api/chat/history/:userId', async (req, res) => {
+  const convo = await Conversation.findOne({ userId: req.params.userId });
+  res.json(convo?.messages || []);
+});
+
+// Edit a specific message
+app.put('/api/chat/message/:id', async (req, res) => {
+  const { newText } = req.body;
+  const { id } = req.params;
+
+  try {
+    await Conversation.updateOne(
+      { "messages._id": id },
+      { $set: { "messages.$.text": newText } }
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Edit error:', err.message);
+    res.status(500).send("Error editing message");
+  }
+});
+
+// Delete a specific message
+app.delete('/api/chat/message/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await Conversation.updateOne(
+      {},
+      { $pull: { messages: { _id: id } } }
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Delete error:', err.message);
+    res.status(500).send("Error deleting message");
+  }
+});
+
+// Serve chat.html by default
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });

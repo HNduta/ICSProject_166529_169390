@@ -1,3 +1,6 @@
+import React from 'react';
+import MoodSelector from './MoodSelector';
+
 function App() {
   return (
     <div
@@ -10,6 +13,7 @@ function App() {
         color: '#111827' // Dark gray text
       }}
     >
+      <MoodSelector />
       <h1>Hello from Kiafya 👋</h1>
       <p>This is your chatbot landing page.</p>
     </div>
@@ -17,4 +21,3 @@ function App() {
 }
 
 export default App;
-
