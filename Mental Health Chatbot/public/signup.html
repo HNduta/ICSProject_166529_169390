@@ -24,7 +24,7 @@
     </div>
 
     <!-- ✍️ Sign Up Form -->
-    <form class="space-y-4">
+    <form id="signup-form" class="space-y-4">
       <div>
         <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
         <input type="text" id="name" name="name" required 
@@ -61,6 +61,31 @@
       <a href="login.html" class="text-red-500 font-medium hover:underline">Log In</a>
     </div>
 
+    <script>
+  document.getElementById("signup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fullName = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    if (password !== confirmPassword) return alert("Passwords do not match");
+
+    const res = await fetch("/api/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName, email, password })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("Signup successful!");
+      window.location.href = "login.html";
+    } else {
+      alert(data.message || "Signup failed");
+    }
+  });
+</script>
   </div>
 
 </body>

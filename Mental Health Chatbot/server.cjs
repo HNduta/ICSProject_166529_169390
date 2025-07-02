@@ -2,23 +2,61 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const axios = require('axios');
+const bcrypt = require('bcrypt');
+const User = require('./models/user.cjs');
+const Conversation = require('./models/conversation.cjs');
 
 const app = express();
 const PORT = 3000;
 
-// Connect to MongoDB
+// MongoDB connection
 mongoose.connect('mongodb://127.0.0.1:27017/chatbotDB', {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+  useUnifiedTopology: true
 });
-
-// Load Conversation model
-const Conversation = require('./models/conversation.cjs');
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Handle chat messages and save them
+// ✳️ User Signup Route
+app.post('/api/signup', async (req, res) => {
+  const { fullName, email, password } = req.body;
+
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(409).json({ message: 'User already exists' });
+
+    const user = new User({ fullName, email, password });
+    await user.save();
+
+    res.status(201).json({ message: 'Signup successful' });
+  } catch (err) {
+    console.error('Signup error:', err.message);
+    res.status(500).json({ message: 'Signup failed', error: err.message });
+  }
+});
+
+
+
+// ✳️ User Login Route
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ message: 'User not found' });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
+
+    res.json({ message: 'Login successful', userId: user._id });
+  } catch (err) {
+    console.error('Login error:', err.message);
+    res.status(500).json({ message: 'Login error', error: err.message });
+  }
+});
+
+// 💬 Chat message route
 app.post('/api/chat', async (req, res) => {
   const { message, userId = "default-user" } = req.body;
 
@@ -31,7 +69,6 @@ app.post('/api/chat', async (req, res) => {
 
     const botReply = response.data.response.trim();
 
-    // Save both user and bot messages in DB
     let convo = await Conversation.findOne({ userId });
     if (!convo) convo = new Conversation({ userId, messages: [] });
 
@@ -40,52 +77,41 @@ app.post('/api/chat', async (req, res) => {
     await convo.save();
 
     res.json({ reply: botReply });
-  } catch (error) {
-    console.error('Ollama Error:', error.message);
-    res.status(500).json({ reply: "⚠️ Sorry, something went wrong talking to the model." });
+  } catch (err) {
+    res.status(500).json({ reply: "⚠️ Something went wrong talking to the model." });
   }
 });
 
-// Fetch full chat history
+// 🗃 Get chat history
 app.get('/api/chat/history/:userId', async (req, res) => {
   const convo = await Conversation.findOne({ userId: req.params.userId });
   res.json(convo?.messages || []);
 });
 
-// Edit a specific message
+// 📝 Edit message
 app.put('/api/chat/message/:id', async (req, res) => {
   const { newText } = req.body;
-  const { id } = req.params;
-
   try {
-    await Conversation.updateOne(
-      { "messages._id": id },
-      { $set: { "messages.$.text": newText } }
-    );
+    await Conversation.updateOne({ "messages._id": req.params.id }, {
+      $set: { "messages.$.text": newText }
+    });
     res.sendStatus(200);
   } catch (err) {
-    console.error('Edit error:', err.message);
-    res.status(500).send("Error editing message");
+    res.status(500).json({ message: "Edit failed" });
   }
 });
 
-// Delete a specific message
+// ❌ Delete message
 app.delete('/api/chat/message/:id', async (req, res) => {
-  const { id } = req.params;
-
   try {
-    await Conversation.updateOne(
-      {},
-      { $pull: { messages: { _id: id } } }
-    );
+    await Conversation.updateOne({}, { $pull: { messages: { _id: req.params.id } } });
     res.sendStatus(200);
   } catch (err) {
-    console.error('Delete error:', err.message);
-    res.status(500).send("Error deleting message");
+    res.status(500).json({ message: "Delete failed" });
   }
 });
 
-// Serve chat.html by default
+// Serve index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

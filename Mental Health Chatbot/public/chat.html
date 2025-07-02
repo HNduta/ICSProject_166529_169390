@@ -12,47 +12,64 @@
   </style>
 </head>
 <body class="bg-blue-50 flex flex-col min-h-screen font-sans">
+  <!-- Header with history link -->
   <header class="bg-white shadow p-4 flex justify-between items-center">
     <h1 class="text-xl font-bold text-blue-700">🧠 TuliaBot</h1>
     <a href="history.html" class="text-sm text-blue-600 underline">View History</a>
   </header>
 
+  <!-- Chat area -->
   <main class="flex-1 p-4 space-y-4 overflow-y-auto" id="chat-box">
     <!-- Messages will be dynamically inserted here -->
   </main>
 
+  <!-- Input area -->
   <footer class="bg-white border-t p-3 flex gap-2">
     <input id="user-input" type="text" placeholder="Type your message..." class="flex-1 border px-4 py-2 rounded-full focus:outline-none" />
-    <button onclick="sendMessage()" class="bg-blue-600 text-white px-4 py-2 rounded-full">Send</button>
+    <button id="send-btn" class="bg-blue-600 text-white px-4 py-2 rounded-full">Send</button>
   </footer>
 
+  <!-- Script section -->
   <script>
-    const userId = "default-user";
+    // ✅ 1. Get logged-in userId from localStorage (was saved at login)
+    const userId = localStorage.getItem("userId") || "default-user";
 
+    // ✅ 2. Load previous messages when the page loads
     window.onload = async () => {
-      const res = await fetch(`/api/chat/history/${userId}`);
-      const messages = await res.json();
-      messages.forEach(msg => addMessageToChat(msg.sender, msg.text));
+      try {
+        const res = await fetch(`/api/chat/history/${userId}`);
+        const messages = await res.json();
+        messages.forEach(msg => addMessageToChat(msg.sender, msg.text));
+      } catch (err) {
+        console.error("Error loading chat history:", err);
+      }
     };
 
+    // ✅ 3. Send message to backend
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const message = input.value.trim();
       if (!message) return;
 
-      addMessageToChat('user', message);
-      input.value = '';
+      addMessageToChat('user', message); // Show user's message immediately
+      input.value = ''; // Clear input
 
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, userId })
-      });
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, userId })
+        });
 
-      const data = await res.json();
-      addMessageToChat('bot', data.reply);
+        const data = await res.json();
+        addMessageToChat('bot', data.reply);
+      } catch (err) {
+        addMessageToChat('bot', '⚠️ Sorry, something went wrong.');
+        console.error("Chat error:", err);
+      }
     }
 
+    // ✅ 4. Display chat message bubble
     function addMessageToChat(sender, text) {
       const chatBox = document.getElementById('chat-box');
       const msgWrapper = document.createElement('div');
@@ -64,8 +81,16 @@
 
       msgWrapper.appendChild(msgBubble);
       chatBox.appendChild(msgWrapper);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
     }
+
+    // ✅ 5. Trigger sendMessage() when clicking button
+    document.getElementById("send-btn").addEventListener("click", sendMessage);
+
+    // ✅ 6. Also allow "Enter" key to send
+    document.getElementById("user-input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") sendMessage();
+    });
   </script>
 </body>
 </html>
