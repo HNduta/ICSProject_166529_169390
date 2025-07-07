@@ -12,15 +12,19 @@
   </style>
 </head>
 <body class="bg-blue-50 flex flex-col min-h-screen font-sans">
-  <!-- Header with history link -->
+
+  <!-- Header with history -->
   <header class="bg-white shadow p-4 flex justify-between items-center">
     <h1 class="text-xl font-bold text-blue-700">🧠 TuliaBot</h1>
-    <a href="history.html" class="text-sm text-blue-600 underline">View History</a>
+    <div class="space-x-4 text-sm">
+      <a href="index.html" class="text-gray-600 underline">🏠 Home</a>
+      <a href="history.html" class="text-blue-600 underline">📜 View History</a>
+    </div>
   </header>
 
   <!-- Chat area -->
   <main class="flex-1 p-4 space-y-4 overflow-y-auto" id="chat-box">
-    <!-- Messages will be dynamically inserted here -->
+  
   </main>
 
   <!-- Input area -->
@@ -31,10 +35,10 @@
 
   <!-- Script section -->
   <script>
-    // ✅ 1. Get logged-in userId from localStorage (was saved at login)
+    //  1. Get logged-in userId from localStorage (was saved at login)
     const userId = localStorage.getItem("userId") || "default-user";
 
-    // ✅ 2. Load previous messages when the page loads
+    //  2. Load previous messages when the page loads
     window.onload = async () => {
       try {
         const res = await fetch(`/api/chat/history/${userId}`);
@@ -45,7 +49,7 @@
       }
     };
 
-    // ✅ 3. Send message to backend
+    //  3. Send message to backend
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const message = input.value.trim();
@@ -69,7 +73,7 @@
       }
     }
 
-    // ✅ 4. Display chat message bubble
+    //  4. Display chat message bubble
     function addMessageToChat(sender, text) {
       const chatBox = document.getElementById('chat-box');
       const msgWrapper = document.createElement('div');
@@ -84,10 +88,10 @@
       chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
     }
 
-    // ✅ 5. Trigger sendMessage() when clicking button
+    //  5. Trigger sendMessage() when clicking button
     document.getElementById("send-btn").addEventListener("click", sendMessage);
 
-    // ✅ 6. Also allow "Enter" key to send
+    //  6. Also allow "Enter" key to send
     document.getElementById("user-input").addEventListener("keydown", function (e) {
       if (e.key === "Enter") sendMessage();
     });
