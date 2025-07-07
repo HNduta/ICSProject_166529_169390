@@ -22,7 +22,7 @@
   </main>
 
   <script>
-    const userId = "default-user";
+    const userId = localStorage.getItem("userId") || "default-user";
 
     window.onload = async () => {
       const res = await fetch(`/api/chat/history/${userId}`);
