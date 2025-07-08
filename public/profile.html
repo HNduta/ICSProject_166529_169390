@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - TuliaBot</title>
+    <!-- New Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: transparent; /* To blend with parent iframe */
+            padding: 1.5rem;
+        }
+        .profile-card {
+            background-color: white;
+            border-radius: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            text-align: center;
+        }
+        .profile-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1; /* gray-300 */
+            border-radius: 0.75rem; /* rounded-lg */
+            font-size: 1rem;
+            color: #4a5568; /* gray-700 */
+            background-color: #f8fafc; /* gray-50 */
+            transition: all 0.2s ease-in-out;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .profile-input:focus {
+            border-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            outline: none;
+        }
+        .profile-button {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 1.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
+            cursor: pointer;
+        }
+        .profile-button:hover {
+            background-color: #2563eb; /* blue-600 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
+        }
+        .profile-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(59, 130, 246, 0.15);
+        }
+        .message {
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+        .success {
+            color: #22c55e; /* green-500 */
+        }
+        .error {
+            color: #ef4444; /* red-500 */
+        }
+        /* Profile picture styling */
+        .profile-picture-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: #e0e7ff; /* Light blue placeholder */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .profile-picture-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+        .profile-picture {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .profile-picture-placeholder {
+            font-size: 3rem;
+            color: #6366f1; /* Indigo-500 */
+        }
+        .upload-icon {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            padding: 0.3rem;
+            font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="bg-blue-50 flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-md profile-card">
+        <h1 id="profile-title" class="text-2xl font-bold text-blue-700 mb-6">Your Profile</h1>
+
+        <!-- Profile Picture Section -->
+        <div class="profile-picture-container" id="profile-picture-container">
+            <img id="profile-picture-preview" class="profile-picture" src="" alt="Profile Picture" style="display: none;">
+            <span id="profile-picture-placeholder" class="profile-picture-placeholder">👤</span>
+            <input type="file" id="profile-picture-upload" accept="image/*" class="hidden">
+            <span class="upload-icon">✏️</span> <!-- Edit icon -->
+        </div>
+
+        <form id="profile-form" class="space-y-4">
+            <div>
+                <label for="profile-name" class="block text-gray-700 text-lg font-medium mb-2">Name:</label>
+                <input type="text" id="profile-name" class="profile-input" placeholder="Enter your name" />
+            </div>
+
+            <div>
+                <label for="profile-email" class="block text-gray-700 text-lg font-medium mb-2">Email:</label>
+                <input type="email" id="profile-email" class="profile-input bg-gray-100 cursor-not-allowed" readonly disabled />
+                <p class="text-xs text-gray-500 mt-1">Email cannot be changed here.</p>
+            </div>
+
+            <div>
+                <label for="profile-user-id" class="block text-gray-700 text-lg font-medium mb-2">User ID:</label>
+                <input type="text" id="profile-user-id" class="profile-input bg-gray-100 cursor-not-allowed" readonly disabled />
+                <p class="text-xs text-gray-500 mt-1">Your unique identifier.</p>
+            </div>
+
+            <button type="submit" id="save-profile-button" class="profile-button mt-6">Save Changes</button>
+            <div id="profile-message" class="message"></div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userId = localStorage.getItem('userId');
+            const userName = localStorage.getItem('userName');
+            const profileTitle = document.getElementById('profile-title');
+            const profileNameInput = document.getElementById('profile-name');
+            const profileEmailInput = document.getElementById('profile-email');
+            const profileUserIdInput = document.getElementById('profile-user-id');
+            const saveProfileButton = document.getElementById('save-profile-button');
+            const profileMessageDiv = document.getElementById('profile-message');
+
+            const profilePictureContainer = document.getElementById('profile-picture-container');
+            const profilePicturePreview = document.getElementById('profile-picture-preview');
+            const profilePicturePlaceholder = document.getElementById('profile-picture-placeholder');
+            const profilePictureUpload = document.getElementById('profile-picture-upload');
+
+            if (!userId || userId === "default-user") {
+                profileTitle.textContent = "Please log in to manage your profile.";
+                profileNameInput.disabled = true;
+                saveProfileButton.disabled = true;
+                profileUserIdInput.value = 'Not logged in';
+                profileEmailInput.value = 'N/A';
+                profilePictureContainer.style.cursor = 'default';
+                profilePictureUpload.disabled = true;
+                return;
+            }
+
+            profileUserIdInput.value = userId;
+
+            // Determine if it's a "first-time" user based on userName
+            if (!userName || userName === 'Not set' || userName.trim() === '') {
+                profileTitle.textContent = "Tell Us About Yourself";
+                profileNameInput.placeholder = "Enter your name";
+            } else {
+                profileTitle.textContent = "Your Profile";
+                profileNameInput.value = userName;
+            }
+
+            // --- Profile Picture Logic ---
+            // Load profile picture from localStorage
+            const savedProfilePicture = localStorage.getItem(`profilePicture_${userId}`);
+            if (savedProfilePicture) {
+                profilePicturePreview.src = savedProfilePicture;
+                profilePicturePreview.style.display = 'block';
+                profilePicturePlaceholder.style.display = 'none';
+            } else {
+                profilePicturePreview.style.display = 'none';
+                profilePicturePlaceholder.style.display = 'block';
+            }
+
+            // Trigger file input click when container is clicked
+            profilePictureContainer.addEventListener('click', () => {
+                profilePictureUpload.click();
+            });
+
+            // Handle file selection
+            profilePictureUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const base64Image = e.target.result;
+                        profilePicturePreview.src = base64Image;
+                        profilePicturePreview.style.display = 'block';
+                        profilePicturePlaceholder.style.display = 'none';
+                        localStorage.setItem(`profilePicture_${userId}`, base64Image); // Save to localStorage
+
+                        // --- Backend Upload (Conceptual) ---
+                        // In a real application, you would send this 'base64Image' to your backend.
+                        // The backend would then save it to a cloud storage (e.g., Firebase Storage, AWS S3)
+                        // and store the *URL* of the image in your MongoDB user document.
+                        // Example (conceptual fetch):
+                        /*
+                        fetch(`/api/users/${userId}/profile-picture`, {
+                            method: 'POST', // Or PUT
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ image: base64Image }) // Send Base64
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log('Profile picture uploaded to backend successfully!', data.imageUrl);
+                                // You might update localStorage with the actual image URL from backend
+                                // localStorage.setItem(`profilePicture_${userId}`, data.imageUrl);
+                            } else {
+                                console.error('Failed to upload profile picture to backend:', data.message);
+                            }
+                        })
+                        .catch(error => console.error('Error uploading profile picture:', error));
+                        */
+                    };
+                    reader.readAsDataURL(file); // Read file as Base64
+                }
+            });
+            // --- End Profile Picture Logic ---
+
+
+            // Fetch full user profile from backend (including email)
+            try {
+                const response = await fetch(`/api/users/${userId}`); // Assuming an API endpoint like /api/users/:userId
+                const data = await response.json();
+
+                if (response.ok && data) {
+                    profileNameInput.value = data.name || (userName !== 'Not set' ? userName : ''); // Use backend name, fallback to localStorage, then empty
+                    profileEmailInput.value = data.email || 'N/A';
+                    // If backend provides a name and it's different from default, update local storage
+                    if (data.name && data.name !== userName) {
+                        localStorage.setItem('userName', data.name);
+                        // Notify parent dashboard to update welcome message
+                        if (window.parent && typeof window.parent.updateWelcomeMessage === 'function') {
+                            window.parent.updateWelcomeMessage(data.name);
+                        }
+                    }
+                    // If backend provides a profile picture URL, load it
+                    if (data.profilePictureUrl) {
+                        profilePicturePreview.src = data.profilePictureUrl;
+                        profilePicturePreview.style.display = 'block';
+                        profilePicturePlaceholder.style.display = 'none';
+                        localStorage.setItem(`profilePicture_${userId}`, data.profilePictureUrl); // Store URL in localStorage
+                    }
+                } else {
+                    console.warn('Could not fetch full user profile from backend:', data.message || 'Unknown error');
+                    profileEmailInput.value = 'N/A';
+                }
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+                profileEmailInput.value = 'N/A';
+            }
+
+            // Save Changes functionality
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newName = profileNameInput.value.trim();
+
+                if (!newName) {
+                    profileMessageDiv.className = 'message error';
+                    profileMessageDiv.textContent = 'Name cannot be empty.';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/users/${userId}/profile`, { // Assuming PUT or POST to /api/users/:userId/profile
+                        method: 'PUT', // Or POST, depending on your backend
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: newName })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        localStorage.setItem('userName', newName); // Update localStorage
+                        profileMessageDiv.className = 'message success';
+                        profileMessageDiv.textContent = 'Profile updated successfully!';
+                        profileTitle.textContent = "Your Profile"; // Change title if it was "Tell Us About Yourself"
+
+                        // Notify parent dashboard to update welcome message
+                        if (window.parent && typeof window.parent.updateWelcomeMessage === 'function') {
+                            window.parent.updateWelcomeMessage(newName);
+                        }
+                    } else {
+                        profileMessageDiv.className = 'message error';
+                        profileMessageDiv.textContent = `Error: ${data.message || 'Failed to update profile'}`;
+                        console.error('Error updating profile:', data);
+                    }
+                } catch (error) {
+                    profileMessageDiv.className = 'message error';
+                    profileMessageDiv.textContent = 'Network error or server unreachable.';
+                    console.error('Profile update fetch error:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

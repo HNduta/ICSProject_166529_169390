@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>TuliaBot - Your Mental Wellness Companion</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- New Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Chart.js for Mood Analysis Graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Base font for the entire app */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Main content area takes remaining vertical space and allows scrolling */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 5.5rem; /* Space for the fixed bottom navigation */
+            padding-top: 1.5rem; /* Padding at the top of content */
+        }
+
+        /* Styling for the card-like sections */
+        .section-card {
+            background-color: white;
+            border-radius: 2rem; /* More rounded corners */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); /* Softer, more pronounced shadow */
+            padding: 1.75rem; /* Slightly more padding */
+            margin-bottom: 1.75rem; /* Consistent spacing between cards */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .section-card:hover {
+            transform: translateY(-4px); /* Slightly more lift on hover */
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Styles for the navigation icons */
+        .nav-icon {
+            width: 1.75rem; /* Larger icons */
+            height: 1.75rem;
+            fill: currentColor;
+            transition: transform 0.2s ease-in-out;
+        }
+        .nav-item:hover .nav-icon {
+            transform: translateY(-3px); /* More pronounced lift on icon hover */
+        }
+        .nav-item {
+            padding: 0.5rem 0.75rem; /* More padding for touch targets */
+            border-radius: 1.5rem; /* Rounded buttons */
+            transition: background-color 0.2s ease-in-out;
+        }
+        .nav-item.text-blue-600 {
+            background-color: #e0e7ff; /* Light blue background for active tab */
+        }
+        .nav-item:hover {
+            background-color: #f0f4f8; /* Light gray on hover */
+        }
+
+
+        /* Hide sections by default, show based on active tab */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.4s ease-out; /* Slightly slower fade in */
+        }
+        .content-section.active {
+            display: block;
+        }
+
+        /* Keyframe for fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); } /* Start lower */
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Styles for embedded iframes to ensure seamless integration */
+        iframe {
+            width: 100%;
+            height: 400px; /* Default height, can be overridden per iframe */
+            border: none;
+            border-radius: 1.5rem; /* More rounded iframes */
+            background-color: transparent;
+            overflow: hidden;
+        }
+        /* Specific height for chat iframe to fill available space */
+        #chatbot-iframe {
+            height: calc(100vh - 18rem);
+            min-height: 350px; /* Slightly increased min-height for chat */
+        }
+
+        /* Custom scrollbar for main content and chat area */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0f4f8; /* blue-50 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #93c5fd; /* blue-300 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #60a5fa; /* blue-400 */
+        }
+
+        /* Calendar specific styling */
+        .calendar-day {
+            width: 48px; /* Larger day circles */
+            height: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; /* Perfectly round */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.8rem; /* text-sm */
+            color: #4a5568; /* gray-700 */
+            border: 2px solid transparent; /* Default transparent border */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Subtle shadow for each day */
+        }
+        .calendar-day.selected {
+            background-color: #bfdbfe; /* blue-200 */
+            border-color: #3b82f6; /* blue-500 */
+            font-weight: 700; /* font-bold */
+            color: #2563eb; /* blue-600 */
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+        }
+        .calendar-day:hover:not(.selected) {
+            background-color: #e0e7ff; /* blue-100 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .calendar-day .day-num {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 700; /* font-bold */
+        }
+        /* Style for primary buttons on home screen */
+        .home-action-button {
+            background-color: #4f46e5; /* Indigo-600 for primary actions */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 1.5rem; /* More rounded */
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+        }
+        .home-action-button:hover {
+            background-color: #6366f1; /* Indigo-500 */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
+        }
+        .home-action-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(79, 70, 229, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-blue-50 flex flex-col min-h-screen text-gray-800">
+
+    <!-- Header Section -->
+    <header class="bg-white shadow-md p-4 flex justify-between items-center z-10 sticky top-0">
+        <div class="flex items-center gap-3">
+            <!-- TuliaBot Logo - Ensure this path is correct -->
+            <img src="/logo_tuliabot.png" alt="TuliaBot Logo" class="w-10 h-10 rounded-full shadow-sm" />
+            <h1 class="text-2xl font-extrabold text-blue-700">TuliaBot</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="welcome-message" class="text-gray-600 text-base font-medium">Welcome back, User!</span>
+            <!-- Profile Icon - Link to profile section -->
+            <button class="text-blue-600 hover:text-blue-800 transition" onclick="showSection('profile-section');">
+                <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 256 256"><path d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c1.21-4.06,3.35-8.17,6.54-11.85a95.86,95.86,0,0,1,25.66-28.8C70.15,152.74,95.28,144,128,144s57.85,8.74,70.71,21.31a95.86,95.86,0,0,1,25.66,28.8C227.58,211.83,229.72,215.94,230.93,220ZM128,136a48,48,0,1,0-48-48A48.05,48.05,0,0,0,128,136Z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area - Scrollable -->
+    <main class="main-content p-4">
+
+        <!-- Home Section (Overview with Analytics and Calendar) -->
+        <section id="home-section" class="content-section active">
+            <div class="section-card">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6">Your Daily Snapshot</h2>
+
+                <!-- Calendar/Date Selector -->
+                <div class="flex items-center justify-center mb-8 bg-gray-50 p-4 rounded-2xl shadow-inner">
+                    <button id="prev-week" class="text-blue-600 hover:text-blue-800 font-bold text-2xl px-3 py-1 rounded-lg transition">&lt;</button>
+                    <div id="calendar-display" class="flex flex-1 justify-around items-center gap-3">
+                        <!-- Days will be inserted here by JavaScript -->
+                    </div>
+                    <button id="next-week" class="text-blue-600 hover:text-blue-800 font-bold text-2xl px-3 py-1 rounded-lg transition">&gt;</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Mood Analytics Card (Chart) -->
+                   <div class="bg-blue-100 p-5 rounded-2xl shadow-sm col-span-full">
+    <h3 class="text-xl font-semibold text-blue-800 mb-4">Your Mood Trend Over Time</h3>
+    
+    <!-- Fixed-size chart container -->
+    <div class="w-full max-w-md mx-auto" style="height: 16rem;">
+        <canvas id="moodChart" style="max-width: 100%; max-height: 100%;"></canvas>
+    </div>
+
+    <p id="mood-chart-message" class="text-base text-gray-600 text-center mt-4">Loading mood analysis...</p>
+</div>
+
+
+                    <!-- Latest Journal Entry Card -->
+                    <div class="bg-purple-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-xl font-semibold text-purple-800 mb-3">Recent Reflections</h3>
+                            <p id="latest-journal-preview" class="text-gray-700 italic text-base mb-4">"No recent entries. Start journaling today!"</p>
+                        </div>
+                        <button class="home-action-button bg-purple-600 hover:bg-purple-700 self-end" onclick="showSection('journal-section');">View Journal</button>
+                    </div>
+
+                    <!-- Quick Chat Access Card -->
+                    <div class="bg-green-100 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-xl font-semibold text-green-800 mb-3">Connect with TuliaBot</h3>
+                            <p class="text-gray-700 text-base mb-4">Your AI companion is here to listen and support.</p>
+                        </div>
+                        <button class="home-action-button bg-green-600 hover:bg-green-700 self-end" onclick="showSection('chat-section');">Start a conversation</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mood Logging Section (Dedicated Page) -->
+        <section id="mood-section" class="content-section">
+            <div class="section-card">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6">Log Your Mood</h2>
+                <iframe id="mood-tracker-iframe-full" src="moodtracker.html" title="Full Mood Tracker" style="height: 500px;"></iframe>
+            </div>
+        </section>
+
+        <!-- Journaling Section (Dedicated Page) -->
+        <section id="journal-section" class="content-section">
+            <div class="section-card">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6">Daily Journal & Reflections</h2>
+                <iframe id="journal-iframe" src="journal.html" title="Journal" style="height: 550px;"></iframe>
+            </div>
+        </section>
+
+        <!-- Resources & Coping Section (Dedicated Page) -->
+        <section id="resources-section" class="content-section">
+            <div class="section-card">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6">Support & Tools</h2>
+                <iframe id="resources-iframe" src="resources.html" title="Resources" style="height: 550px;"></iframe>
+            </div>
+        </section>
+
+        <!-- Chatbot Section (Dedicated Page) -->
+        <section id="chat-section" class="content-section">
+            <div class="section-card" style="height: calc(100vh - 12rem); display: flex; flex-direction: column;">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6">Chat with TuliaBot</h2>
+                <iframe id="chatbot-iframe" src="chat.html" title="TuliaBot Chat" class="flex-1"></iframe>
+            </div>
+        </section>
+
+        <!-- Profile Section (Dedicated Page) -->
+        <section id="profile-section" class="content-section">
+            <div class="section-card">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6">Your Profile & Settings</h2>
+                <iframe id="profile-iframe" src="profile.html" title="User Profile" style="height: 350px;"></iframe>
+            </div>
+        </section>
+
+        <!-- Emergency Section (Dedicated Page) -->
+        <section id="emergency-section" class="content-section">
+            <div class="section-card">
+                <h2 class="text-2xl font-bold text-red-700 mb-6">Urgent Help & Support</h2>
+                <iframe id="emergency-iframe" src="emergency.html" title="Emergency Help" style="height: 550px;"></iframe>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t p-3 flex justify-around items-center z-20">
+        <!-- Home Button -->
+        <button class="nav-item flex flex-col items-center text-blue-600 focus:outline-none" data-target="home-section">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 256 256"><path d="M224,208a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V115.55a8,8,0,0,1,2.62-5.91l80-72.73a8,8,0,0,1,10.76,0l80,72.73a8,8,0,0,1,2.62,5.91ZM128,40.91,48,112.27V200H208V112.27Z"></path></svg>
+            <span class="text-xs mt-1 font-medium">Home</span>
+        </button>
+        <!-- Mood Analytics Button -->
+        <button class="nav-item flex flex-col items-center text-gray-500 hover:text-blue-600 focus:outline-none" data-target="mood-section">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM128,216a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM164,104a12,12,0,1,1-12,12A12,12,0,0,1,164,104Zm-72,0a12,12,0,1,1-12,12A12,12,0,0,1,92,104Zm76,64H92a8,8,0,0,1,0-16h76a8,8,0,0,1,0,16Z"></path></svg>
+            <span class="text-xs mt-1 font-medium">Mood</span>
+        </button>
+        <!-- Journal Button -->
+        <button class="nav-item flex flex-col items-center text-gray-500 hover:text-blue-600 focus:outline-none" data-target="journal-section">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM120,168H80a8,8,0,0,1,0-16h40a8,8,0,0,1,0,16Zm56-40H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Z"></path></svg>
+            <span class="text-xs mt-1 font-medium">Journal</span>
+        </button>
+        <!-- Chat Button -->
+        <button class="nav-item flex flex-col items-center text-gray-500 hover:text-blue-600 focus:outline-none" data-target="chat-section">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 256 256"><path d="M128,24A104,104,0,0,0,36.5,160.7l-9.4,37.6a16,16,0,0,0,19.2,19.2l37.6-9.4A104,104,0,1,0,128,24ZM48,128a80,80,0,0,1,135.2-61.6,8,8,0,0,1-10.4,11.2,64,64,0,0,0-98.4,75.2,8,8,0,0,1-11.2,10.4A80.1,80.1,0,0,1,48,128Z"></path></svg>
+            <span class="text-xs mt-1 font-medium">Chat</span>
+        </button>
+        <!-- Resources Button -->
+        <button class="nav-item flex flex-col items-center text-gray-500 hover:text-blue-600 focus:outline-none" data-target="resources-section">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 256 256"><path d="M224,88V48a16,16,0,0,0-16-16H48A16,16,0,0,0,32,48V88a16,16,0,0,0,16,16H208A16,16,0,0,0,224,88ZM48,48H208V88H48ZM224,168v-40a16,16,0,0,0-16-16H48a16,16,0,0,0-16,16v40a16,16,0,0,0,16,16H208A16,16,0,0,0,224,168ZM48,128H208v40H48ZM224,208v-40a16,16,0,0,0-16-16H48a16,16,0,0,0-16,16v40a16,16,0,0,0,16,16H208A16,16,0,0,0,224,208ZM48,184H208v40H48Z"></path></svg>
+            <span class="text-xs mt-1 font-medium">Resources</span>
+        </button>
+        <!-- Emergency Button -->
+        <button class="nav-item flex flex-col items-center text-gray-500 hover:text-blue-600 focus:outline-none" data-target="emergency-section">
+            <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM152,168a8,8,0,0,1-8,8H112a8,8,0,0,1,0-16h32A8,8,0,0,1,152,168ZM128,128a8,8,0,0,1-8-8V80a8,8,0,0,1,16,0v40A8,8,0,0,1,128,128Z"></path></svg>
+            <span class="text-xs mt-1 font-medium">Help</span>
+        </button>
+    </nav>
+
+    <!-- JavaScript for dynamic content and navigation -->
+    <script>
+        // Function to show a specific section and hide others
+        function showSection(targetId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            } else {
+                console.error(`Section with ID ${targetId} not found.`);
+                return;
+            }
+
+            // Update active state of nav buttons
+            document.querySelectorAll('.nav-item').forEach(button => {
+                if (button.dataset.target === targetId) {
+                    button.classList.add('text-blue-600');
+                    button.classList.remove('text-gray-500', 'hover:text-blue-600');
+                } else {
+                    button.classList.remove('text-blue-600');
+                    button.classList.add('text-gray-500', 'hover:text-blue-600');
+                }
+            });
+
+            // Trigger specific actions when certain sections become active
+            if (targetId === 'home-section') {
+                // Refresh mood chart on home section
+                setTimeout(() => {
+                    if (typeof fetchAndDrawMoodChart === 'function') {
+                        fetchAndDrawMoodChart(); // Call to draw the chart
+                    } else {
+                        console.warn("fetchAndDrawMoodChart function not found. Is dashboard.js loaded?");
+                    }
+                    if (typeof updateCalendar === 'function') {
+                        updateCalendar(currentDate); // Update calendar on home section load
+                    }
+                    // Also load latest journal entry preview
+                    if (typeof fetchLatestJournalEntry === 'function') {
+                        fetchLatestJournalEntry();
+                    }
+                }, 100);
+            } else if (targetId === 'mood-section') {
+                // No need to redraw chart here, it's on home. Mood section is for logging.
+                // Ensure the mood tracker iframe is loaded/refreshed
+                const moodTrackerFullIframe = document.getElementById('mood-tracker-iframe-full');
+                if (moodTrackerFullIframe && moodTrackerFullIframe.contentWindow) {
+                    // Optional: reload the iframe to clear its state if necessary
+                    // moodTrackerFullIframe.contentWindow.location.reload();
+                    // Or call a function inside it if it has one to reset
+                }
+            } else if (targetId === 'journal-section') {
+                setTimeout(() => {
+                    const journalIframe = document.getElementById('journal-iframe');
+                    if (journalIframe && journalIframe.contentWindow && typeof journalIframe.contentWindow.loadJournalEntries === 'function') {
+                         journalIframe.contentWindow.loadJournalEntries();
+                    } else {
+                        console.warn("Journal iframe or loadJournalEntries function not ready.");
+                    }
+                }, 100);
+            }
+            // You can add similar logic for other sections if they need to refresh their content
+        }
+
+        // Event listeners for navigation buttons
+        document.querySelectorAll('.nav-item').forEach(button => {
+            button.addEventListener('click', () => {
+                showSection(button.dataset.target);
+            });
+        });
+
+        // Calendar Logic
+        let currentDate = new Date(); // Current date for calendar display
+
+        function getWeekDays(date) {
+            const startOfWeek = new Date(date);
+            // Set to Sunday of the current week
+            startOfWeek.setDate(date.getDate() - date.getDay());
+            startOfWeek.setHours(0,0,0,0); // Normalize to start of day
+
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(startOfWeek);
+                day.setDate(startOfWeek.getDate() + i);
+                days.push(day);
+            }
+            return days;
+        }
+
+        function updateCalendar(date) {
+            const calendarDisplay = document.getElementById('calendar-display');
+            calendarDisplay.innerHTML = ''; // Clear existing days
+
+            const weekDays = getWeekDays(date);
+            const today = new Date();
+            today.setHours(0,0,0,0); // Normalize today for comparison
+
+            weekDays.forEach(day => {
+                const dayDiv = document.createElement('div');
+                const isSelected = day.toDateString() === today.toDateString(); // Select today by default
+                dayDiv.className = `calendar-day text-gray-700 flex-shrink-0 ${
+                    isSelected ? 'selected' : 'bg-gray-100'
+                }`;
+                dayDiv.innerHTML = `
+                    <span class="uppercase text-xs">${day.toLocaleString('en-US', { weekday: 'short' })}</span>
+                    <span class="day-num">${day.getDate()}</span>
+                `;
+                // Optional: Add click listener to select a day and trigger mood fetch for that day
+                dayDiv.addEventListener('click', () => {
+                    // For now, this just visually selects the day.
+                    // In a full app, you'd fetch mood data for this specific day.
+                    document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+                    dayDiv.classList.add('selected');
+                    // You might want to update the mood chart to show data for this selected day/week
+                    // fetchAndDrawMoodChart(day); // Pass the selected day to redraw chart
+                });
+                calendarDisplay.appendChild(dayDiv);
+            });
+        }
+
+        document.getElementById('prev-week').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() - 7);
+            updateCalendar(currentDate);
+        });
+
+        document.getElementById('next-week').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() + 7);
+            updateCalendar(currentDate);
+        });
+
+        // Function to fetch and display latest journal entry preview
+        async function fetchLatestJournalEntry() {
+            const userId = localStorage.getItem('userId');
+            const latestJournalPreview = document.getElementById('latest-journal-preview');
+
+            if (!userId) {
+                latestJournalPreview.textContent = "Please log in to see your journal preview.";
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/journal/user/${userId}?limit=1&sort=-date`); // Assuming backend supports limit and sort
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                const data = await res.json();
+
+                if (data && data.length > 0) {
+                    const latestEntry = data[0];
+                    latestJournalPreview.textContent = `"${latestEntry.content.substring(0, 70)}${latestEntry.content.length > 70 ? '...' : ''}"`;
+                } else {
+                    latestJournalPreview.textContent = "No recent entries. Start journaling today!";
+                }
+            } catch (error) {
+                console.error("Error fetching latest journal entry:", error);
+                latestJournalPreview.textContent = "Error loading journal preview.";
+            }
+        }
+
+
+        // Initial load: show the home section and populate calendar
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('home-section');
+            updateCalendar(currentDate); // Populate calendar on initial load
+
+            // Attempt to get userName from localStorage and display welcome message
+            const userName = localStorage.getItem("userName");
+            if (userName) {
+                document.getElementById('welcome-message').textContent = `Welcome back, ${userName}!`;
+            } else {
+                const userId = localStorage.getItem("userId");
+                if (userId) {
+                    document.getElementById('welcome-message').textContent = `Welcome back, User!`;
+                } else {
+                    document.getElementById('welcome-message').textContent = `Welcome, Guest!`;
+                }
+            }
+            // Initial fetch of mood chart for home section
+            if (typeof fetchAndDrawMoodChart === 'function') {
+                fetchAndDrawMoodChart();
+            }
+            // Initial fetch for latest journal entry
+            fetchLatestJournalEntry();
+        });
+    </script>
+    <!-- Your dashboard.js script for mood chart and other dashboard logic -->
+    <script src="dashboard.js"></script>
+</body>
+</html>
