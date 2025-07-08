@@ -14,6 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // --- MongoDB Connection ---
+mongodb+srv;//maxinemwangi:V7bkpRYGNSOwmJbQ@tuliabot.3yqfcdg.mongodb.net/?retryWrites=true&w=majority&appName=TuliaBot
 mongoose.connect('mongodb://127.0.0.1:27017/chatbotDB', {
     useNewUrlParser: true,
     useUnifiedTopology: true
